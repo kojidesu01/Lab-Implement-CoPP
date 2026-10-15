@@ -1,62 +1,84 @@
-# CoPP-Lab
+# Lab Implement CoPP
 
-โปรเจกต์ Capstone สำหรับจัดเก็บแล็บ **Control Plane Policing (CoPP)** เพื่อส่งขึ้น GitHub และใช้ตรวจสอบการทดสอบ Telnet ก่อนและหลังปรับนโยบาย CoPP
+Capstone Project Part III: ทดลอง **Control Plane Policing (CoPP)** บน Cisco Modeling Labs (CML) ผ่าน Cisco DevNet Sandbox เพื่อศึกษาการควบคุมทราฟฟิกที่เข้าสู่ Control Plane ของเราเตอร์
 
-> **สถานะหลักฐาน:** ZIP นี้มีโครงสร้างโปรเจกต์และ README แต่ยังไม่พบไฟล์ export จาก CML, running-config หรือ packet capture ใน workspace จึงยังไม่สามารถยืนยันผลการทดลองจริงจากหลักฐานต้นฉบับได้ โปรดเพิ่มไฟล์จริงตามรายการด้านล่างก่อนใช้เป็นหลักฐานส่งงาน
+## ผู้จัดทำ
 
-## โครงสร้างไฟล์
+| ชื่อ | รหัสนักศึกษา |
+| --- | --- |
+| นาย ฐิติพงศ์ กาญจนดำรงนันท์ | 633020290-2 |
+| นาย ธีรเมธ สายคำ | 673380273-9 |
+| นางสาว ปภาวรินทร์ นาเมืองรักษ์ | 673380275-5 |
+| นางสาว ปรนันท์ บุสดีวงค์ | 673380276-3 |
+
+[ดูสไลด์นำเสนอบน Canva](https://canva.link/0pdby32q597h2uc)
+
+## วัตถุประสงค์
+
+- ศึกษาความต่างระหว่าง Control Plane และ Data Plane และการทำงานของ CoPP กับ Modular QoS CLI (MQC)
+- สร้าง topology R1–R2–A1 และกำหนดค่า EIGRP AS 123
+- ใช้ ACL, Class Map และ Policy Map เพื่อควบคุมทราฟฟิกที่เข้าสู่ Control Plane ของ R1
+- ตรวจพฤติกรรม Telnet จากไฟล์ packet capture และเปรียบเทียบทราฟฟิกที่มุ่งเข้า R1 กับทราฟฟิกที่ R1 ส่งต่อไป A1
+
+## สภาพแวดล้อมและการเชื่อมต่อ
+
+| อุปกรณ์ | Image ตามสไลด์ | บทบาท | IP ที่ใช้ในไฟล์แล็บ |
+| --- | --- | --- | --- |
+| R1 | CSR1000v / IOS XE 17.03.08a | เราเตอร์ที่ติดตั้ง CoPP | `10.10.1.1/24`, `172.16.12.1/30` |
+| R2 | Cisco IOL | ต้นทางทราฟฟิกทดสอบ | `172.16.12.2/30` |
+| A1 | Cisco IOL-L2 | สวิตช์ปลายทางทดสอบ | `10.10.1.4/24` |
 
 ```text
-CoPP-Lab/
-├── README.md
-├── topology/
-│   └── .gitkeep
-├── configs/
-│   └── .gitkeep
-└── captures/
-    └── .gitkeep
+A1 (10.10.1.4) ── R1 (10.10.1.1 / 172.16.12.1) ── R2 (172.16.12.2)
 ```
 
-ไฟล์ที่ต้องเพิ่มจากแล็บจริง:
+## ไฟล์ใน Repository
 
-| ตำแหน่ง | เนื้อหาที่ต้องเป็นไฟล์จริง |
+```text
+.
+├── README.md
+├── topology/
+│   └── Lab_26.1.6-Implement_CoPP.yaml
+├── configs/
+│   ├── R1-config.txt
+│   ├── R2-config.txt
+│   └── A1-config.txt
+└── captures/
+    ├── Telnet_Blocked.pcap
+    └── Telnet_pass.pcap
+```
+
+- [`topology/Lab_26.1.6-Implement_CoPP.yaml`](topology/Lab_26.1.6-Implement_CoPP.yaml): ไฟล์ topology สำหรับนำเข้า CML ซึ่งมี configuration ฝังอยู่
+- [`configs/`](configs/): ไฟล์ configuration แยกตามอุปกรณ์สำหรับอ่านและตรวจคำสั่งสำคัญ
+- [`captures/`](captures/): ไฟล์จับแพ็กเก็ตจริงของการทดสอบ Telnet สองกรณี
+
+## การกำหนดค่า CoPP ที่สำคัญ
+
+ใน [`R1-config.txt`](configs/R1-config.txt) มี ACL `TELNET` สำหรับ TCP พอร์ต 23, Class Map `CM-TELNET` และ Policy Map `PM-COPP` ที่กำหนด `conform-action drop` และ `exceed-action drop` ให้คลาส Telnet จากนั้นผูกนโยบายกับ `control-plane` ขาเข้า ส่วน EIGRP, SSH และ ICMP ถูกแยกเป็นคลาสของตนเอง
+
+R1 และ R2 กำหนด EIGRP AS 123 ในเครือข่าย `172.16.12.0/30` ตามไฟล์ config สไลด์นำเสนอรายงานว่า EIGRP Neighbor R1–R2 ทำงานได้ แต่ Repository ยังไม่มีผลคำสั่ง `show ip eigrp neighbors` สำหรับตรวจยืนยันสถานะ ณ เวลาทดสอบ
+
+## บัญชีทดสอบในแล็บ
+
+| Username | Password |
 | --- | --- |
-| `topology/CoPP-Capstone-Lab.yaml` | ไฟล์ topology ที่ export จาก CML |
-| `configs/R1-config.txt` | running-config ของ R1 |
-| `configs/R2-config.txt` | running-config ของ R2 |
-| `configs/A1-config.txt` | running-config ของ A1 |
-| `captures/telnet-blocked.pcap` | packet capture ระหว่างกรณี Telnet ถูกบล็อก |
-| `captures/telnet-allowed.pcap` | packet capture ระหว่างกรณี Telnet ผ่านได้ |
+| `admin` | `cisco123` |
 
-ไม่มีโฟลเดอร์ `screenshots` ตามขอบเขตงานนี้ ไฟล์ `.gitkeep` มีไว้ให้ Git ติดตามโฟลเดอร์ที่ยังว่าง และลบได้เมื่อใส่ไฟล์จริงแล้ว
+บัญชีนี้มีไว้ใช้ในสภาพแวดล้อมแล็บเท่านั้น ไม่ควรนำรหัสผ่านเดียวกันไปใช้กับระบบอื่น
 
-## ข้อมูลสำหรับทดสอบ
+## ผลการทดลองจากไฟล์ PCAP
 
-| รายการ | ค่า |
-| --- | --- |
-| Username | `admin` |
-| Password | `cisco123` |
-
-ใช้บัญชีนี้เฉพาะในสภาพแวดล้อมแล็บที่ได้รับอนุญาต เนื่องจาก README ใน GitHub จะเปิดเผยรหัสผ่านนี้ต่อผู้ที่เข้าถึง repository ได้
-
-## การทดสอบและหลักฐาน
-
-1. นำเข้าไฟล์ CML YAML และเริ่มอุปกรณ์ตาม topology จริง
-2. ตรวจการเชื่อมต่อและสถานะ CoPP บน R1, R2 และ A1 ด้วยคำสั่งที่อุปกรณ์รองรับ เช่น `show running-config`, `show policy-map control-plane` และ `show policy-map interface control-plane`
-3. ทดสอบ Telnet ด้วยบัญชี `admin` / `cisco123` ในสถานการณ์ที่นโยบายบล็อก และบันทึกไฟล์ `captures/telnet-blocked.pcap`
-4. ทดสอบอีกครั้งในสถานการณ์ที่นโยบายอนุญาต และบันทึกไฟล์ `captures/telnet-allowed.pcap`
-5. บันทึกผล CLI จริง (เวลา, ต้นทาง, ปลายทาง, คำสั่ง, ผลลัพธ์ และตัวนับนโยบาย) ลงในตารางด้านล่างหลังตรวจหลักฐาน
-
-## ผลการทดลองจริง
-
-| กรณี | ผล CLI จริง | หลักฐาน packet | สถานะยืนยัน |
+| กรณี | ต้นทาง → ปลายทาง | สิ่งที่พบใน capture | ข้อสรุปที่ยืนยันได้ |
 | --- | --- | --- | --- |
-| Telnet ถูกบล็อก | ยังไม่มีบันทึกผล CLI ใน workspace | `captures/telnet-blocked.pcap` ยังขาด | รอตรวจจากแล็บจริง |
-| Telnet ผ่านได้ | ยังไม่มีบันทึกผล CLI ใน workspace | `captures/telnet-allowed.pcap` ยังขาด | รอตรวจจากแล็บจริง |
+| [`Telnet_Blocked.pcap`](captures/Telnet_Blocked.pcap) | R2 `172.16.12.2` → R1 `172.16.12.1:23` | พบ TCP SYN 6 แพ็กเก็ตจาก 2 การพยายามเชื่อมต่อ ไม่มี SYN-ACK ในไฟล์ | ไม่เห็นการตั้ง TCP session ไปยัง R1 ในช่วงที่จับแพ็กเก็ต; สอดคล้องกับนโยบาย `CM-TELNET` ที่ drop ทราฟฟิกเข้าสู่ Control Plane |
+| [`Telnet_pass.pcap`](captures/Telnet_pass.pcap) | R2 `172.16.12.2` → A1 `10.10.1.4:23` | พบ SYN, SYN-ACK, ACK และข้อมูล Telnet แลกเปลี่ยนกัน | TCP session ไปยัง A1 ตั้งขึ้นและมีการสื่อสาร Telnet; เป็นทราฟฟิกที่ R1 ส่งต่อ ไม่ใช่การ Telnet เข้าสู่ Control Plane ของ R1 |
 
-ยังไม่ควรสรุปว่าทดสอบผ่านหรือไม่ผ่านจนกว่าจะตรวจไฟล์ capture และผล CLI จากการทดลองจริง ผลที่ต้องการพิสูจน์คือ Telnet ถูกบล็อกเมื่อใช้นโยบายจำกัด และผ่านได้เมื่อใช้นโยบายอนุญาต
+PCAP กรณีที่ผ่านแสดงการเชื่อมต่อและการแลกเปลี่ยนข้อมูล แต่ไม่ได้ใช้ยืนยันผลการล็อกอินหรือพิสูจน์การเปลี่ยนนโยบาย CoPP บนปลายทางเดียวกัน การระบุสาเหตุการ drop อย่างเด็ดขาดควรแนบตัวนับจาก `show policy-map control-plane` หรือคำสั่งที่ image รองรับด้วย
 
-## ก่อนนำขึ้น GitHub
+## วิธีตรวจซ้ำ
 
-ตรวจว่าไฟล์ YAML, config และ PCAP เป็นไฟล์ export จากแล็บจริง ชื่อไฟล์ตรงกับรายการด้านบน และไม่มีข้อมูลลับอื่นนอกเหนือจากบัญชีทดสอบที่ตั้งใจเผยแพร่
-# Lab-Implement-CoPP
+1. นำเข้าไฟล์ YAML ใน CML และเริ่ม R1, R2 และ A1
+2. ตรวจ interface และ EIGRP ด้วย `show ip interface brief` และ `show ip eigrp neighbors`
+3. ตรวจนโยบายบน R1 ด้วย `show running-config` และ `show policy-map control-plane` หรือคำสั่งเทียบเท่าที่ image รองรับ
+4. จาก R2 ทดลอง Telnet ไป `172.16.12.1` และ `10.10.1.4` แล้วเปรียบเทียบกับ PCAP สองไฟล์
+5. บันทึกผล CLI และตัวนับ CoPP หลังการทดสอบ เพื่อแยกผลของนโยบายออกจากปัญหาการเชื่อมต่ออื่น
