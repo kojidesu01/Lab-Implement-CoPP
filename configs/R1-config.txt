@@ -1,0 +1,78 @@
+!
+hostname R1
+!
+username admin privilege 15 secret cisco123
+!
+ip domain name CCNPv8.CoPP.Lab
+ip ssh version 2
+!
+interface GigabitEthernet1
+ description Connection-to-A1
+ ip address 10.10.1.1 255.255.255.0
+ no shutdown
+!
+interface GigabitEthernet2
+ description Connection-to-R2
+ ip address 172.16.12.1 255.255.255.252
+ no shutdown
+!
+router eigrp 123
+ network 10.10.1.0 0.0.0.255
+ network 172.16.12.0 0.0.0.3
+ no auto-summary
+!
+ip access-list extended TELNET
+ permit tcp any any eq 23
+!
+ip access-list extended EIGRP
+ permit eigrp any any
+!
+ip access-list extended SSH
+ permit tcp any any eq 22
+!
+ip access-list extended ICMP
+ permit icmp any any
+!
+ip access-list extended CATCH-ALL
+ permit icmp any any
+ permit udp any any
+ permit tcp any any
+ permit ip any any
+!
+class-map match-all CM-TELNET
+ match access-group name TELNET
+!
+class-map match-all CM-EIGRP
+ match access-group name EIGRP
+!
+class-map match-all CM-SSH
+ match access-group name SSH
+!
+class-map match-all CM-ICMP
+ match access-group name ICMP
+!
+class-map match-all CM-CATCH-ALL
+ match access-group name CATCH-ALL
+!
+policy-map PM-COPP
+ class CM-TELNET
+  police 8000 conform-action drop exceed-action drop
+ class CM-EIGRP
+  police rate 10 pps conform-action transmit exceed-action transmit
+ class CM-SSH
+  police 50000 conform-action transmit exceed-action transmit
+ class CM-ICMP
+  police rate 10 pps conform-action transmit exceed-action drop
+ class CM-CATCH-ALL
+  police 50000 conform-action transmit exceed-action drop
+ class class-default
+  police 12000 conform-action transmit exceed-action transmit
+!
+control-plane
+ service-policy input PM-COPP
+!
+line vty 0 4
+ login local
+ transport input telnet ssh
+!
+end
