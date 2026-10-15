@@ -11,7 +11,7 @@ Capstone Project Part III: ทดลอง **Control Plane Policing (CoPP)** บ
 | นางสาว ปภาวรินทร์ นาเมืองรักษ์ | 673380275-5 |
 | นางสาว ปรนันท์ บุสดีวงค์ | 673380276-3 |
 
-[ดูสไลด์นำเสนอบน Canva](https://canva.link/0pdby32q597h2uc)
+[ดูสไลด์นำเสนอบน Canva และ การประเมิน](https://canva.link/0pdby32q597h2uc)
 
 ## วัตถุประสงค์
 
